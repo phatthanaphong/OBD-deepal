@@ -11,7 +11,8 @@
         android:roundIcon="@android:mipmap/sym_def_app_icon"
         android:supportsRtl="false"
         android:theme="@style/AppTheme"
-        android:hardwareAccelerated="true">
+        android:hardwareAccelerated="true"
+        android:largeHeap="true">
 
         <!-- SPLASH / LAUNCHER -->
         <activity

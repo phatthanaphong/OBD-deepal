@@ -8,6 +8,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -29,34 +30,42 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
 
-        // Enable WebView debugging (remove for production)
-        WebView.setWebContentsDebuggingEnabled(false);
-
         webView = findViewById(R.id.webview);
 
-        WebSettings settings = webView.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);
-        settings.setLoadWithOverviewMode(true);
-        settings.setUseWideViewPort(true);
-        settings.setBuiltInZoomControls(false);
-        settings.setDisplayZoomControls(false);
-        settings.setAllowFileAccess(true);
-        settings.setAllowContentAccess(true);
-        // CACHE_ONLY — ใช้ไฟล์ใน assets ไม่ต้องการอินเตอร์เน็ต
-        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
-        settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        WebSettings s = webView.getSettings();
+        s.setJavaScriptEnabled(true);
+        s.setDomStorageEnabled(true);
+        s.setLoadWithOverviewMode(true);
+        s.setUseWideViewPort(true);
+        s.setBuiltInZoomControls(false);
+        s.setDisplayZoomControls(false);
+        s.setAllowFileAccess(true);
+        s.setAllowContentAccess(true);
+        s.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        s.setMediaPlaybackRequiresUserGesture(false);
+        s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        // ลด RAM usage
+        s.setRenderPriority(WebSettings.RenderPriority.HIGH);
+        s.setEnableSmoothTransition(false);
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                String url = request.getUrl().toString();
-                // Block external URLs (Google Fonts etc.) — ป้องกัน timeout crash
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest req) {
+                String url = req.getUrl().toString();
                 if (url.startsWith("file://") || url.startsWith("about:")) {
                     view.loadUrl(url);
                 }
-                return true;
+                return true; // block all external URLs
+            }
+
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest req) {
+                String url = req.getUrl().toString();
+                // Block Google Fonts and any external resource silently
+                if (!url.startsWith("file://") && !url.startsWith("about:")) {
+                    return new WebResourceResponse("text/plain", "utf-8", null);
+                }
+                return super.shouldInterceptRequest(view, req);
             }
         });
 
@@ -68,20 +77,14 @@ public class MainActivity extends Activity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            if (webView.canGoBack()) {
-                webView.goBack();
-            } else {
-                finish();
-            }
+            if (webView.canGoBack()) webView.goBack();
+            else finish();
             return true;
         }
         return super.onKeyDown(keyCode, event);
     }
 
-    @Override
-    protected void onPause() { super.onPause(); webView.onPause(); }
-    @Override
-    protected void onResume() { super.onResume(); webView.onResume(); }
-    @Override
-    protected void onDestroy() { webView.destroy(); super.onDestroy(); }
+    @Override protected void onPause() { super.onPause(); webView.onPause(); }
+    @Override protected void onResume() { super.onResume(); webView.onResume(); }
+    @Override protected void onDestroy() { webView.destroy(); super.onDestroy(); }
 }
