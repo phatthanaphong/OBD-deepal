@@ -5589,8 +5589,8 @@ function openCase(idx) {
   const specHtml = (c.specs||[]).map(s => `<tr><td>${s[0]}</td><td>${s[1]}</td></tr>`).join('');
   const quizHtml = (c.quiz||[]).map((q,i) => `<div class="quiz-item"><span class="quiz-q">${i+1}</span><span>${q}</span></div>`).join('');
   const theoryHtml = getTheory(c.diagram);
-  const svgHtml = makeSVGDiagram(c.diagram);
   const diagLabel = getDiagramLabel(c.diagram);
+  const svgHtml = '<div id="svgPlaceholder" style="height:100px;display:flex;align-items:center;justify-content:center;color:#8B949E;font-size:12px">กำลังโหลด...</div>';
 
   document.getElementById('modalContent').innerHTML = `
     <div class="modal-head ${catCls}">
@@ -5649,6 +5649,14 @@ function openCase(idx) {
   ov.classList.add('open');
   ov.scrollTop = 0;
   document.body.style.overflow = 'hidden';
+  // Lazy render SVG
+  const _diag = c.diagram;
+  requestAnimationFrame(function() {
+    try {
+      var ph = document.getElementById('svgPlaceholder');
+      if (ph) ph.outerHTML = makeSVGDiagram(_diag);
+    } catch(e) {}
+  });
 }
 
 function closeModal() {
@@ -5663,7 +5671,10 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal()
 /* ═══════════════════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════════════════ */
-renderGrid();
+// Init — defer ให้ DOM ready ก่อน
+window.addEventListener('DOMContentLoaded', function() {
+  try { renderGrid(); } catch(e) { console.error('renderGrid error:', e); }
+});
 
 /* ═══════════════════════════════════════════════════════
    APP SHELL — EXIT DIALOG

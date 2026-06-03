@@ -6437,16 +6437,21 @@ function toggleTheme() {
 /* ═══════════════════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════════════════ */
-buildTOC();
-updateNav();
+window.addEventListener('DOMContentLoaded', function() {
+  try { buildTOC(); } catch(e) { console.error('buildTOC:', e); }
+  try { updateNav(); } catch(e) { console.error('updateNav:', e); }
 
-// Pre-render first few cases
-setTimeout(() => {
-  for (let i = 0; i < Math.min(3, CASES.length); i++) getCardHtml(i);
-}, 200);
+  // Pre-render first few cases (deferred)
+  setTimeout(function() {
+    try {
+      for (var i = 0; i < Math.min(3, CASES.length); i++) getCardHtml(i);
+    } catch(e) {}
+  }, 500);
 
-// Cover click to start
-document.getElementById('bookCover').addEventListener('click', nextPage);
+  // Cover click to start
+  var cover = document.getElementById('bookCover');
+  if (cover) cover.addEventListener('click', nextPage);
+});
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════
